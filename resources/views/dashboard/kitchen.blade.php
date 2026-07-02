@@ -25,7 +25,7 @@
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 21V10m14 11V10M3 10h18M12 3v3m-4 0V4m8 2V4"/></svg>
             </div>
             <h3 class="text-lg font-semibold text-cream">Kitchen Display System (KDS)</h3>
-            <p class="mt-1 text-sm text-cream-muted">View incoming orders and update status: Preparing → Ready → Served (FR-05, FR-06).</p>
+            <p class="mt-1 text-sm text-cream-muted">View incoming orders and update status: Preparing → Ready → Served.</p>
         </a>
     </div>
 </x-staff-layout>

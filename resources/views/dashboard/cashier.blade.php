@@ -23,7 +23,7 @@
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7h18v10H3zM3 11h18"/></svg>
             </div>
             <h3 class="text-lg font-semibold text-cream">Billing &amp; Payment</h3>
-            <p class="mt-1 text-sm text-cream-muted">Generate bills, apply discounts, and process payments (FR-07, FR-08).</p>
+            <p class="mt-1 text-sm text-cream-muted">Generate bills, apply discounts, and process payments.</p>
         </a>
     </div>
 </x-staff-layout>
