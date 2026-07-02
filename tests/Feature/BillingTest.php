@@ -80,11 +80,12 @@ class BillingTest extends TestCase
             ])
             ->assertRedirect(route('billing.receipt', $order));
 
+        // Balance = subtotal − discount + SST 6% (28 + 1.68).
         $this->assertDatabaseHas('payments', [
             'order_id' => $order->order_id,
             'payment_method' => 'Cash',
             'payment_status' => 'Successful',
-            'total_amount' => 28.00,
+            'total_amount' => 29.68,
         ]);
         $this->assertSame('Available', $order->table->fresh()->status);   // FR-08 release
     }
@@ -114,11 +115,12 @@ class BillingTest extends TestCase
                 'discount_amount' => 3.00,
             ])->assertRedirect(route('billing.receipt', $order));
 
+        // Balance = (28 − 3) + SST 6% (25 + 1.50) = 26.50.
         $this->assertDatabaseHas('payments', [
             'order_id' => $order->order_id,
             'payment_method' => 'Card',
             'payment_status' => 'Successful',
-            'total_amount' => 25.00,
+            'total_amount' => 26.50,
         ]);
     }
 
@@ -162,12 +164,12 @@ class BillingTest extends TestCase
             ->post("/billing/{$order->order_id}", ['payment_method' => 'Cash', 'discount_amount' => 0])
             ->assertRedirect(route('billing.receipt', $order));
 
-        // Only the RM30 balance is collected (deposit = subtotal − discount − total_amount).
+        // Balance = 60 + SST 6% (3.60) − 30 deposit = 33.60.
         $this->assertDatabaseHas('payments', [
             'order_id' => $order->order_id,
             'subtotal' => 60.00,
             'discount_amount' => 0.00,
-            'total_amount' => 30.00,   // balance
+            'total_amount' => 33.60,   // balance after deposit
         ]);
         // The reservation is marked Completed once its deposit is consumed.
         $this->assertDatabaseHas('reservations', [

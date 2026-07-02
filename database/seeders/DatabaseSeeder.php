@@ -34,10 +34,10 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        // --- Restaurant tables (FR-02) — 10 tables of varying capacity ---
+        // --- Restaurant tables (FR-02) — 7 tables, maximum 6 pax per table ---
         $tables = [
             [1, 2], [2, 2], [3, 4], [4, 4], [5, 4],
-            [6, 6], [7, 6], [8, 8], [9, 10], [10, 12],
+            [6, 6], [7, 6],
         ];
 
         foreach ($tables as [$number, $capacity]) {

@@ -35,8 +35,8 @@ class OrderController extends Controller
 
         return view('orders.create', [
             'table' => $table,
-            'menu' => $menu->groupBy('category'),
             'menuFlat' => $menuFlat,
+            'tables' => TableInfo::orderBy('table_number')->get(['table_id', 'table_number', 'status']),
         ]);
     }
 

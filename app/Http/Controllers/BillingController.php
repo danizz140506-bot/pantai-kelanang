@@ -18,6 +18,9 @@ use Illuminate\View\View;
  */
 class BillingController extends Controller
 {
+    /** Service tax rate applied to the bill (SST 6%, FR-07 — applicable taxes). */
+    private const TAX_RATE = 0.06;
+
     /** Orders awaiting payment (no successful payment yet). */
     public function index(): View
     {
@@ -40,6 +43,7 @@ class BillingController extends Controller
         return view('billing.show', [
             'order' => $order,
             'deposit' => $reservation ? (float) $reservation->deposit_amount : 0.0,
+            'taxRate' => self::TAX_RATE,
         ]);
     }
 
@@ -56,12 +60,16 @@ class BillingController extends Controller
         $subtotal = (float) $order->total_amount;
         $discount = min((float) ($data['discount_amount'] ?? 0), $subtotal);
 
+        // Service tax (SST 6%) is charged on the discounted amount (FR-07).
+        $tax = round(($subtotal - $discount) * self::TAX_RATE, 2);
+
         // Credit the deposit already paid online for this table's reservation (FR-01).
         $reservation = $this->reservationFor($order);
         $deposit = $reservation ? (float) $reservation->deposit_amount : 0.0;
 
         // The balance is what the cashier actually collects at the counter.
-        $balance = round(max(0, $subtotal - $discount - $deposit), 2);
+        // (tax is derivable on the receipt as (subtotal − discount) × TAX_RATE.)
+        $balance = round(max(0, $subtotal - $discount + $tax - $deposit), 2);
 
         // Cash (or a fully-covered balance) settles directly; card / e-wallet use CHIP.
         if ($data['payment_method'] === 'Cash' || $balance <= 0.0) {

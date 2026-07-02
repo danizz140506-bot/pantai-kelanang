@@ -21,6 +21,14 @@ use Illuminate\Support\Facades\DB;
  */
 class ReservationController extends Controller
 {
+    /** The restaurant trades 8:00 AM – 10:00 PM. */
+    private const OPEN_TIME = '08:00';
+
+    private const CLOSE_TIME = '22:00';
+
+    /** Bookings open today and up to this many days ahead. */
+    private const MAX_ADVANCE_DAYS = 2;
+
     /** Public reservation form. */
     public function create(): View
     {
@@ -38,6 +46,8 @@ class ReservationController extends Controller
             ->get(['table_id', 'table_number', 'capacity', 'status']);
 
         return view('reservations.create', [
+            'dateOptions' => $this->dateOptions(),
+            'timeOptions' => $this->timeOptions(),
             'menu' => $menu->groupBy('category'),
             'menuFlat' => $menuFlat,
             'tables' => $tables,
@@ -51,9 +61,9 @@ class ReservationController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone_number' => ['required', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:255'],
-            'reservation_date' => ['required', 'date', 'after_or_equal:today'],
-            'arrival_time' => ['required', 'date_format:H:i'],
-            'pax' => ['required', 'integer', 'min:1', 'max:20'],
+            'reservation_date' => ['required', 'date', 'after_or_equal:today', 'before_or_equal:'.now()->addDays(self::MAX_ADVANCE_DAYS)->toDateString()],
+            'arrival_time' => ['required', 'date_format:H:i', 'after_or_equal:'.self::OPEN_TIME, 'before_or_equal:'.self::CLOSE_TIME],
+            'pax' => ['required', 'integer', 'min:1', 'max:6'],
             'table_id' => ['required', 'integer', 'exists:table_info,table_id'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.menu_id' => ['required', 'integer', 'exists:menu_items,menu_id'],
@@ -156,5 +166,36 @@ class ReservationController extends Controller
             'ok' => true,
             'reservation' => $reservation->fresh()->load(['table', 'customer']),
         ]);
+    }
+
+    /** Selectable reservation dates: today through MAX_ADVANCE_DAYS ahead. */
+    private function dateOptions(): array
+    {
+        $tags = ['Today', 'Tomorrow'];
+
+        return collect(range(0, self::MAX_ADVANCE_DAYS))->map(function (int $offset) use ($tags) {
+            $d = now()->addDays($offset);
+            $tag = $tags[$offset] ?? $d->format('l'); // "Today" / "Tomorrow" / weekday name
+
+            return [
+                'value' => $d->toDateString(),
+                'label' => "{$tag} — {$d->format('j M')}",
+            ];
+        })->all();
+    }
+
+    /** Selectable arrival time slots in 30-minute intervals across opening hours. */
+    private function timeOptions(): array
+    {
+        $slots = [];
+        $cursor = \Illuminate\Support\Carbon::createFromFormat('H:i', self::OPEN_TIME);
+        $close = \Illuminate\Support\Carbon::createFromFormat('H:i', self::CLOSE_TIME);
+
+        while ($cursor->lte($close)) {
+            $slots[] = ['value' => $cursor->format('H:i'), 'label' => $cursor->format('g:i A')];
+            $cursor->addMinutes(30);
+        }
+
+        return $slots;
     }
 }

@@ -1,89 +1,113 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                Take Order &middot; Table {{ $table->table_number }}
-            </h2>
-            <a href="{{ route('tables.index') }}" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to floor</a>
-        </div>
-    </x-slot>
+<x-staff-layout title="Take Order">
+    <div x-data="orderCart()" x-init="init()">
 
-    <div class="py-8" x-data="orderCart()">
-        <div class="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-3 lg:px-8">
-
-            {{-- Menu --}}
-            <div class="space-y-6 lg:col-span-2">
-                @foreach ($menu as $category => $items)
-                    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-                        <div class="border-b border-gray-100 bg-gray-50 px-5 py-3">
-                            <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-500">{{ $category }}</h3>
-                        </div>
-                        <ul class="divide-y divide-gray-100">
-                            @foreach ($items as $item)
-                                <li class="flex items-center justify-between gap-4 px-5 py-3">
-                                    <div>
-                                        <p class="font-medium text-gray-800">{{ $item->name }}</p>
-                                        <p class="text-sm text-gray-500">RM {{ number_format($item->price, 2) }}</p>
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <button type="button" @click="dec({{ $item->menu_id }})"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-50">&minus;</button>
-                                        <span class="w-6 text-center font-semibold text-gray-800" x-text="qty[{{ $item->menu_id }}] || 0"></span>
-                                        <button type="button" @click="inc({{ $item->menu_id }})"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 text-gray-600 transition hover:bg-gray-50">+</button>
-                                    </div>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
+        {{-- Table strip (floor view — select/switch table, SDD 6.3) --}}
+        <div class="mb-5">
+            <div class="mb-2 flex items-center justify-between">
+                <p class="text-xs font-semibold uppercase tracking-wide text-cream-faint">Floor · tap a table to switch</p>
+                <a href="{{ route('tables.index') }}" class="text-xs text-cream-muted hover:text-ember">Full floor view &rarr;</a>
+            </div>
+            <div class="flex gap-2 overflow-x-auto pb-1">
+                @foreach ($tables as $t)
+                    @php
+                        $isCurrent = $t->table_id === $table->table_id;
+                        $tone = match ($t->status) {
+                            'Available' => 'text-emerald-300 border-emerald-500/30',
+                            'Reserved' => 'text-amber-300 border-amber-500/30',
+                            default => 'text-rose-300 border-rose-500/30',
+                        };
+                    @endphp
+                    <a href="{{ route('orders.create', $t) }}"
+                       class="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl border text-sm font-bold transition
+                              {{ $isCurrent ? 'border-ember bg-ember text-espresso-950 ring-2 ring-ember/40' : $tone.' bg-espresso-900 hover:bg-espresso-800' }}">
+                        T{{ $t->table_number }}
+                        <span class="mt-0.5 h-1.5 w-1.5 rounded-full {{ $isCurrent ? 'bg-espresso-950/50' : '' }}"></span>
+                    </a>
                 @endforeach
             </div>
+        </div>
 
-            {{-- Order summary --}}
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {{-- Menu --}}
+            <div class="lg:col-span-2">
+                {{-- Category tabs --}}
+                <div class="mb-4 flex flex-wrap gap-2">
+                    <template x-for="cat in categories" :key="cat">
+                        <button type="button" @click="activeCategory = cat"
+                            class="rounded-lg px-4 py-2 text-sm font-semibold transition"
+                            :class="activeCategory === cat ? 'bg-ember text-espresso-950' : 'border border-espresso-700 bg-espresso-900 text-cream-muted hover:border-ember/60'"
+                            x-text="cat"></button>
+                    </template>
+                </div>
+
+                {{-- Menu cards --}}
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <template x-for="m in menuFlat.filter(x => x.category === activeCategory)" :key="m.menu_id">
+                        <div class="flex flex-col justify-between rounded-2xl border border-espresso-700 bg-espresso-850 p-4 transition hover:border-ember/40">
+                            <div>
+                                <p class="font-medium leading-snug text-cream" x-text="m.name"></p>
+                                <p class="mt-0.5 text-sm text-ember">RM <span x-text="m.price.toFixed(2)"></span></p>
+                            </div>
+                            <div class="mt-3">
+                                <template x-if="(qty[m.menu_id] || 0) === 0">
+                                    <button type="button" @click="inc(m.menu_id)"
+                                        class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-ember/50 py-2 text-sm font-semibold text-ember transition hover:bg-ember hover:text-espresso-950">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+                                        Add
+                                    </button>
+                                </template>
+                                <template x-if="(qty[m.menu_id] || 0) > 0">
+                                    <div class="flex items-center justify-between rounded-lg bg-espresso-900 p-1">
+                                        <button type="button" @click="dec(m.menu_id)" class="flex h-8 w-8 items-center justify-center rounded-md text-cream-muted transition hover:bg-espresso-800">&minus;</button>
+                                        <span class="text-sm font-bold text-cream" x-text="qty[m.menu_id]"></span>
+                                        <button type="button" @click="inc(m.menu_id)" class="flex h-8 w-8 items-center justify-center rounded-md text-cream-muted transition hover:bg-espresso-800">+</button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            {{-- Current Order --}}
             <div class="lg:col-span-1">
-                <div class="sticky top-6 rounded-xl border border-gray-200 bg-white shadow-sm">
-                    <div class="border-b border-gray-100 px-5 py-3">
-                        <h3 class="font-semibold text-gray-800">Order Summary</h3>
-                        <p class="text-sm text-gray-500">Table {{ $table->table_number }}</p>
+                <div class="sticky top-6 flex max-h-[calc(100vh-3rem)] flex-col rounded-2xl border border-espresso-700 bg-espresso-850">
+                    <div class="border-b border-espresso-700 px-5 py-4">
+                        <h3 class="font-display text-lg font-semibold text-cream">Current Order</h3>
+                        <p class="text-sm text-cream-muted">Table {{ $table->table_number }} · Dine-in</p>
                     </div>
 
-                    <div class="max-h-[24rem] overflow-y-auto px-5 py-3">
+                    <div class="flex-1 overflow-y-auto px-5 py-3">
                         <template x-if="cart.length === 0">
-                            <p class="py-8 text-center text-sm text-gray-400">No items added yet.</p>
+                            <p class="py-10 text-center text-sm text-cream-faint">No items yet. Tap <span class="text-ember">Add</span> on a dish.</p>
                         </template>
-
                         <ul class="space-y-3">
                             <template x-for="line in cart" :key="line.menu_id">
-                                <li class="border-b border-gray-50 pb-3">
+                                <li class="border-b border-espresso-800 pb-3">
                                     <div class="flex items-start justify-between gap-2">
-                                        <div>
-                                            <p class="text-sm font-medium text-gray-800">
-                                                <span x-text="line.quantity"></span> &times; <span x-text="line.name"></span>
-                                            </p>
-                                            <p class="text-xs text-gray-500">RM <span x-text="line.subtotal.toFixed(2)"></span></p>
+                                        <div class="min-w-0">
+                                            <p class="truncate text-sm font-medium text-cream"><span x-text="line.quantity"></span>× <span x-text="line.name"></span></p>
+                                            <p class="text-xs text-cream-muted">RM <span x-text="line.subtotal.toFixed(2)"></span></p>
                                         </div>
-                                        <button type="button" @click="qty[line.menu_id] = 0"
-                                            class="text-xs text-rose-500 hover:text-rose-700">Remove</button>
+                                        <button type="button" @click="qty[line.menu_id] = 0" class="shrink-0 text-xs text-rosewood-text hover:text-rose-300">Remove</button>
                                     </div>
                                     <input type="text" x-model="notes[line.menu_id]" placeholder="Special instructions (optional)"
-                                        class="mt-2 w-full rounded-lg border-gray-200 text-xs placeholder-gray-400 focus:border-gray-400 focus:ring-0" />
+                                        class="mt-2 w-full rounded-lg border border-espresso-700 bg-espresso-900 px-2.5 py-1.5 text-xs text-cream placeholder-cream-faint focus:border-ember focus:outline-none focus:ring-0" />
                                 </li>
                             </template>
                         </ul>
                     </div>
 
-                    <div class="border-t border-gray-100 px-5 py-4">
+                    <div class="border-t border-espresso-700 px-5 py-4">
                         <div class="mb-3 flex items-center justify-between">
-                            <span class="text-sm text-gray-500">Total</span>
-                            <span class="text-lg font-bold text-gray-800">RM <span x-text="total.toFixed(2)"></span></span>
+                            <span class="text-sm text-cream-muted">Total</span>
+                            <span class="font-display text-2xl font-bold text-cream">RM <span x-text="total.toFixed(2)"></span></span>
                         </div>
-
-                        <p x-show="error" x-cloak x-text="error" class="mb-2 text-sm text-rose-600"></p>
-
+                        <p x-show="error" x-cloak x-text="error" class="mb-2 text-sm text-rosewood-text"></p>
                         <button type="button" @click="submit()" :disabled="submitting || cart.length === 0"
-                            class="w-full rounded-lg bg-gray-800 py-3 text-sm font-semibold text-white transition hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-40">
+                            class="w-full rounded-lg bg-ember py-3 text-sm font-semibold text-espresso-950 transition hover:bg-ember-600 disabled:cursor-not-allowed disabled:opacity-40">
                             <span x-show="!submitting">Submit Order to Kitchen</span>
-                            <span x-show="submitting" x-cloak>Submitting&hellip;</span>
+                            <span x-show="submitting" x-cloak>Submitting…</span>
                         </button>
                     </div>
                 </div>
@@ -95,10 +119,17 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('orderCart', () => ({
                 menuFlat: @json($menuFlat),
+                categories: [],
+                activeCategory: '',
                 qty: {},
                 notes: {},
                 error: '',
                 submitting: false,
+
+                init() {
+                    this.categories = [...new Set(this.menuFlat.map(m => m.category))];
+                    this.activeCategory = this.categories[0] || '';
+                },
 
                 inc(id) { this.qty[id] = (this.qty[id] || 0) + 1; },
                 dec(id) { this.qty[id] = Math.max(0, (this.qty[id] || 0) - 1); },
@@ -106,17 +137,9 @@
                 get cart() {
                     return this.menuFlat
                         .filter(m => (this.qty[m.menu_id] || 0) > 0)
-                        .map(m => ({
-                            menu_id: m.menu_id,
-                            name: m.name,
-                            quantity: this.qty[m.menu_id],
-                            subtotal: m.price * this.qty[m.menu_id],
-                        }));
+                        .map(m => ({ menu_id: m.menu_id, name: m.name, quantity: this.qty[m.menu_id], subtotal: m.price * this.qty[m.menu_id] }));
                 },
-
-                get total() {
-                    return this.cart.reduce((sum, l) => sum + l.subtotal, 0);
-                },
+                get total() { return this.cart.reduce((sum, l) => sum + l.subtotal, 0); },
 
                 async submit() {
                     if (this.cart.length === 0) { this.error = 'Add at least one item.'; return; }
@@ -129,11 +152,7 @@
                             headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json', 'Content-Type': 'application/json' },
                             body: JSON.stringify({
                                 table_id: {{ $table->table_id }},
-                                items: this.cart.map(l => ({
-                                    menu_id: l.menu_id,
-                                    quantity: l.quantity,
-                                    special_instructions: this.notes[l.menu_id] || null,
-                                })),
+                                items: this.cart.map(l => ({ menu_id: l.menu_id, quantity: l.quantity, special_instructions: this.notes[l.menu_id] || null })),
                             }),
                         });
                         const body = await res.json();
@@ -148,4 +167,4 @@
             }));
         });
     </script>
-</x-app-layout>
+</x-staff-layout>

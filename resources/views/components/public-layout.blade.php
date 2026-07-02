@@ -16,18 +16,15 @@
     <body class="min-h-screen bg-espresso-950 font-sans text-cream antialiased">
         {{-- Top bar --}}
         <header class="border-b border-espresso-700">
-            <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-                <a href="{{ route('reservations.create') }}" class="flex items-center gap-3">
-                    <span class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-cream ring-1 ring-ember/50">
+            <div class="mx-auto flex max-w-5xl items-center px-4 py-4 sm:px-6">
+                <a href="{{ route('reservations.create') }}" class="flex min-w-0 items-center gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-cream ring-1 ring-ember/50">
                         <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-full w-full object-cover" />
                     </span>
-                    <span>
+                    <span class="min-w-0">
                         <span class="block text-[10px] font-semibold uppercase tracking-[0.2em] text-ember">Restaurant Management</span>
-                        <span class="block font-display text-lg font-semibold leading-none text-cream">Asam Pedas Claypot Pantai Kelanang</span>
+                        <span class="block truncate font-display text-lg font-semibold leading-none text-cream">Asam Pedas Claypot Pantai Kelanang</span>
                     </span>
-                </a>
-                <a href="{{ route('login') }}" class="rounded-lg border border-espresso-700 px-4 py-2 text-sm font-medium text-cream-muted transition hover:border-ember hover:text-ember">
-                    Staff Login
                 </a>
             </div>
         </header>

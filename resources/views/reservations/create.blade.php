@@ -61,19 +61,48 @@
                         </div>
                         <div>
                             <label class="mb-1.5 block text-xs font-medium text-cream-muted">Reservation Date</label>
-                            <input name="reservation_date" type="date" x-model="date" min="{{ now()->toDateString() }}" required
-                                   class="w-full rounded-lg border border-espresso-700 bg-espresso-900 px-3.5 py-2.5 text-sm text-cream transition focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/20 [color-scheme:dark]" />
+                            <div class="relative">
+                                <select name="reservation_date" x-model="date" required
+                                        class="w-full appearance-none rounded-lg border border-espresso-700 bg-espresso-900 px-3.5 py-2.5 pr-10 text-sm text-cream transition focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/20">
+                                    <template x-for="d in dateOptions" :key="d.value">
+                                        <option :value="d.value" x-text="d.label"></option>
+                                    </template>
+                                </select>
+                                <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cream-faint" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                            </div>
                         </div>
-                        <div>
-                            <label class="mb-1.5 block text-xs font-medium text-cream-muted">Arrival Time</label>
-                            <input name="arrival_time" type="time" x-model="time" required
-                                   class="w-full rounded-lg border border-espresso-700 bg-espresso-900 px-3.5 py-2.5 text-sm text-cream transition focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/20 [color-scheme:dark]" />
+                        <div x-data="{ open: false }" @click.outside="open = false; syncTimeQuery()">
+                            <div class="mb-1.5 flex items-baseline justify-between">
+                                <label class="block text-xs font-medium text-cream-muted">Arrival Time</label>
+                                <span class="text-[10px] text-cream-faint">8AM–10PM</span>
+                            </div>
+                            <div class="relative">
+                                <input type="hidden" name="arrival_time" :value="time">
+                                <input type="text" x-model="timeQuery" autocomplete="off" placeholder="Type or pick a time"
+                                       @focus="open = true" @click="open = true" @input="open = true"
+                                       @keydown.escape="open = false; syncTimeQuery()"
+                                       @keydown.enter.prevent="pickFirstTimeMatch()"
+                                       @keydown.down.prevent="open = true"
+                                       class="w-full rounded-lg border border-espresso-700 bg-espresso-900 px-3.5 py-2.5 pr-10 text-sm text-cream placeholder-cream-faint transition focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/20" />
+                                <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cream-faint" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 3"/></svg>
+
+                                <div x-show="open" x-cloak x-transition.opacity.duration.100ms
+                                     class="absolute z-20 mt-1.5 max-h-52 w-full overflow-y-auto rounded-lg border border-espresso-700 bg-espresso-900 py-1 shadow-xl">
+                                    <template x-for="t in filteredTimeOptions" :key="t.value">
+                                        <button type="button" @click="pickTime(t); open = false"
+                                            class="block w-full px-3.5 py-2 text-left text-sm transition"
+                                            :class="time === t.value ? 'bg-ember font-semibold text-espresso-950' : 'text-cream hover:bg-espresso-800'"
+                                            x-text="t.label"></button>
+                                    </template>
+                                    <p x-show="filteredTimeOptions.length === 0" class="px-3.5 py-3 text-xs text-cream-faint">No match — try a time between 8:00 AM and 10:00 PM.</p>
+                                </div>
+                            </div>
                         </div>
                         <div class="sm:col-span-2">
                             <label class="mb-1.5 block text-xs font-medium text-cream-muted">Number of Guests</label>
                             <div class="inline-flex items-center gap-3 rounded-lg border border-espresso-700 bg-espresso-900 p-1.5">
                                 <button type="button" @click="decPax()" aria-label="Fewer guests" class="flex h-8 w-8 items-center justify-center rounded-md text-cream-muted transition hover:bg-espresso-800">&minus;</button>
-                                <input name="pax" type="number" min="1" max="20" x-model.number="pax" @input="validateSelection()" required
+                                <input name="pax" type="number" min="1" max="6" x-model.number="pax" @input="validateSelection()" required
                                        class="w-12 border-0 bg-transparent p-0 text-center text-base font-semibold text-cream focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none" />
                                 <button type="button" @click="incPax()" aria-label="More guests" class="flex h-8 w-8 items-center justify-center rounded-md text-cream-muted transition hover:bg-espresso-800">+</button>
                             </div>
@@ -89,14 +118,58 @@
                     <p class="mb-4 text-xs text-cream-faint">Green tables can seat your party — tap to select.</p>
 
                     {{-- Table map --}}
-                    <div class="grid grid-cols-4 gap-2.5 sm:grid-cols-6 md:grid-cols-8">
+                    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                         <template x-for="t in tables" :key="t.table_id">
                             <button type="button" @click="selectTable(t)" :disabled="!isSelectable(t)"
                                 :class="tileClass(t)"
-                                class="relative flex aspect-square flex-col items-center justify-center rounded-xl border font-semibold transition focus:outline-none">
-                                <span class="text-base leading-none" x-text="String(t.table_number).padStart(2, '0')"></span>
-                                <span class="mt-1 text-[9px] font-medium opacity-75" x-text="t.capacity + 'p'"></span>
-                                <svg x-show="selectedTable === t.table_id" x-cloak class="absolute right-1 top-1 h-3 w-3" fill="none" stroke="currentColor" stroke-width="3.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                class="relative rounded-2xl border p-3 transition focus:outline-none sm:p-4">
+
+                                {{-- selected tick --}}
+                                <span x-show="selectedTable === t.table_id" x-cloak
+                                      class="absolute right-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-espresso-950/70">
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                </span>
+
+                                <p class="text-left font-sans text-lg font-bold leading-none tabular-nums">
+                                    T<span x-text="t.table_number"></span>
+                                </p>
+
+                                {{-- table + person icons (layout matches capacity) --}}
+                                <svg viewBox="0 0 120 120" class="mx-auto h-20 w-20 sm:h-24 sm:w-24" fill="none">
+                                    {{-- the table --}}
+                                    <rect x="34" y="40" width="52" height="40" rx="10"
+                                          stroke="currentColor" stroke-width="4"
+                                          fill="currentColor" fill-opacity="0.12" />
+
+                                    {{-- 2 pax: facing each other --}}
+                                    <g x-show="t.capacity <= 2" fill="currentColor">
+                                        <g transform="translate(60,24)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(60,100)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                    </g>
+
+                                    {{-- 4 pax: two top, two bottom --}}
+                                    <g x-show="t.capacity > 2 && t.capacity <= 4" fill="currentColor">
+                                        <g transform="translate(44,24)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(76,24)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(44,100)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(76,100)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                    </g>
+
+                                    {{-- 6 pax: two top, two bottom, one each side --}}
+                                    <g x-show="t.capacity > 4" fill="currentColor">
+                                        <g transform="translate(44,24)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(76,24)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(15,62)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(105,62)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(44,100)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                        <g transform="translate(76,100)"><circle cy="-5" r="5.5"/><path d="M-8 12a8 8 0 0 1 16 0Z"/></g>
+                                    </g>
+                                </svg>
+
+                                <div class="mt-1 flex items-center justify-between">
+                                    <span class="text-[11px] font-medium opacity-80" x-text="t.capacity + ' pax'"></span>
+                                    <span class="text-[10px] font-semibold uppercase tracking-wide" x-text="statusLabel(t)"></span>
+                                </div>
                             </button>
                         </template>
                     </div>
@@ -194,22 +267,43 @@
                     Alpine.data('reservation', () => ({
                         tables: @json($tables),
                         menuFlat: @json($menuFlat),
+                        dateOptions: @json($dateOptions),
+                        timeOptions: @json($timeOptions),
                         step: 1,
                         err: '',
                         name: @js(old('name', '')),
                         phone: @js(old('phone_number', '')),
-                        date: @js(old('reservation_date', now()->toDateString())),
+                        date: @js(old('reservation_date', $dateOptions[0]['value'])),
                         time: @js(old('arrival_time', '19:00')),
+                        timeQuery: '',
                         pax: {{ (int) old('pax', 2) }},
                         selectedTable: null,
                         qty: {},
 
                         init() {
+                            this.syncTimeQuery();
                             // If the server bounced us back with errors, resume on the menu step.
                             @if ($errors->any()) this.step = 2; @endif
                         },
 
-                        incPax() { if (this.pax < 20) this.pax++; this.validateSelection(); },
+                        // --- Arrival time combobox: type to filter, or pick from the list ---
+                        get filteredTimeOptions() {
+                            const q = this.timeQuery.trim().toLowerCase();
+                            if (!q) return this.timeOptions;
+                            const current = this.timeOptions.find(t => t.value === this.time);
+                            if (current && current.label.toLowerCase() === q) return this.timeOptions;
+                            return this.timeOptions.filter(t => t.label.toLowerCase().includes(q));
+                        },
+                        pickTime(t) { this.time = t.value; this.timeQuery = t.label; },
+                        pickFirstTimeMatch() {
+                            if (this.filteredTimeOptions.length > 0) this.pickTime(this.filteredTimeOptions[0]);
+                        },
+                        syncTimeQuery() {
+                            const opt = this.timeOptions.find(t => t.value === this.time);
+                            this.timeQuery = opt ? opt.label : '';
+                        },
+
+                        incPax() { if (this.pax < 6) this.pax++; this.validateSelection(); },
                         decPax() { if (this.pax > 1) this.pax--; },
                         isSelectable(t) { return t.status === 'Available' && t.capacity >= this.pax; },
                         selectTable(t) { if (this.isSelectable(t)) { this.selectedTable = t.table_id; this.err = ''; } },
@@ -223,6 +317,11 @@
                             if (t.status !== 'Available') return 'border-rosewood-border/40 bg-rosewood-bg/30 text-rosewood-text/70 cursor-not-allowed';
                             if (t.capacity < this.pax) return 'border-espresso-800 bg-espresso-900/40 text-cream-faint opacity-50 cursor-not-allowed';
                             return 'border-emerald-500/30 bg-emerald-500/10 text-emerald-200 hover:border-emerald-400/70 hover:bg-emerald-500/20';
+                        },
+                        statusLabel(t) {
+                            if (this.selectedTable === t.table_id) return 'Selected';
+                            if (t.status !== 'Available') return 'Booked';
+                            return t.capacity >= this.pax ? 'Available' : 'Too small';
                         },
 
                         next() {

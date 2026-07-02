@@ -1,29 +1,36 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Waiter Dashboard') }}
-        </h2>
-    </x-slot>
+<x-staff-layout title="Dashboard">
+    <div class="mb-6">
+        <h1 class="font-display text-2xl font-semibold text-cream sm:text-3xl">Waiter Dashboard</h1>
+        <p class="text-sm text-cream-muted">Welcome back, {{ auth()->user()->full_name }} · {{ now()->format('l, j M Y') }}</p>
+    </div>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6 text-gray-900">
-                    Welcome back, <span class="font-semibold">{{ Auth::user()->full_name }}</span>.
-                    You are signed in as <span class="font-semibold">Waiter</span>.
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <a href="{{ route('tables.index') }}" class="block bg-white shadow-sm sm:rounded-lg p-6 transition hover:shadow-md hover:ring-1 hover:ring-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Table Availability &amp; Assignment</h3>
-                    <p class="text-sm text-gray-500">View live table status and assign tables (FR-02, FR-03).</p>
-                </a>
-                <a href="{{ route('orders.index') }}" class="block bg-white shadow-sm sm:rounded-lg p-6 transition hover:shadow-md hover:ring-1 hover:ring-gray-200">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Orders</h3>
-                    <p class="text-sm text-gray-500">View today's orders and their live status; start a new order (FR-04, FR-06).</p>
-                </a>
-            </div>
+    {{-- Stats --}}
+    <div class="mb-6 grid grid-cols-2 gap-4">
+        <div class="rounded-2xl border border-espresso-700 bg-espresso-850 p-5">
+            <p class="text-xs font-medium uppercase tracking-wide text-cream-faint">Available Tables</p>
+            <p class="mt-1 text-2xl font-bold text-cream">{{ $availableTables }}</p>
+        </div>
+        <div class="rounded-2xl border border-espresso-700 bg-espresso-850 p-5">
+            <p class="text-xs font-medium uppercase tracking-wide text-cream-faint">Orders Today</p>
+            <p class="mt-1 text-2xl font-bold text-cream">{{ $ordersToday }}</p>
         </div>
     </div>
-</x-app-layout>
+
+    {{-- Actions --}}
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <a href="{{ route('tables.index') }}" class="group rounded-2xl border border-espresso-700 bg-espresso-850 p-6 transition hover:border-ember/50">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-ember/15 text-ember">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M6 7v10M18 7v10M4 17h16"/></svg>
+            </div>
+            <h3 class="text-lg font-semibold text-cream">Table Availability &amp; Assignment</h3>
+            <p class="mt-1 text-sm text-cream-muted">View live table status and seat parties (FR-02, FR-03).</p>
+        </a>
+        <a href="{{ route('orders.index') }}" class="group rounded-2xl border border-espresso-700 bg-espresso-850 p-6 transition hover:border-ember/50">
+            <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-ember/15 text-ember">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 6h11M8 12h11M8 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>
+            </div>
+            <h3 class="text-lg font-semibold text-cream">Orders</h3>
+            <p class="mt-1 text-sm text-cream-muted">Track today's orders and their live status (FR-04, FR-06).</p>
+        </a>
+    </div>
+</x-staff-layout>
