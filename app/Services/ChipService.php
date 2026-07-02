@@ -32,13 +32,14 @@ class ChipService
      *
      * @return array{id:string, checkout_url:string, status:string}
      */
-    public function createPurchase(float $amount, array $client, string $successRedirect, string $failureRedirect): array
+    public function createPurchase(float $amount, array $client, string $successRedirect, string $failureRedirect, string $reference = ''): array
     {
         $response = Http::withToken(config('services.chip.secret_key'))
             ->acceptJson()
             ->asJson()
             ->post($this->endpoint('/purchases/'), [
                 'brand_id' => config('services.chip.brand_id'),
+                'reference' => $reference,   // our reservation id — used by the webhook to map back
                 'client' => [
                     'email' => $client['email'] ?: 'guest@pantaikelanang.test',
                     'full_name' => $client['name'] ?? '',
@@ -83,6 +84,7 @@ class ChipService
             'id' => $data['id'] ?? $id,
             'status' => $data['status'] ?? 'unknown',
             'paid' => ($data['status'] ?? '') === 'paid',
+            'reference' => $data['reference'] ?? null,
         ];
     }
 

@@ -119,6 +119,7 @@ class ReservationController extends Controller
             ['name' => $data['name'], 'phone' => $data['phone_number'], 'email' => $data['email'] ?? ''],
             route('reservations.return', ['reservation' => $reservation->reservation_id]),
             route('reservations.return', ['reservation' => $reservation->reservation_id, 'failed' => 1]),
+            (string) $reservation->reservation_id,
         );
 
         session(['reservation_payment_pid' => $purchase['id']]);

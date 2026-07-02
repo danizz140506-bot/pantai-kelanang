@@ -16,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => CheckRole::class,
         ]);
+        // CHIP posts to this endpoint server-to-server without a CSRF token.
+        $middleware->validateCsrfTokens(except: ['webhooks/chip']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         // Return JSON for API routes and for any AJAX/fetch request that asks

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\ChipWebhookController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\KitchenController;
 use App\Http\Controllers\OrderController;
@@ -15,6 +16,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [ReservationController::class, 'create'])->name('reservations.create');
 Route::post('/reserve', [ReservationController::class, 'store'])->name('reservations.store');
 Route::get('/reserve/return/{reservation}', [ReservationController::class, 'return'])->name('reservations.return');
+
+// CHIP payment webhook (server-to-server; CSRF-exempt — see bootstrap/app.php).
+Route::post('/webhooks/chip', [ChipWebhookController::class, 'handle'])->name('webhooks.chip');
 
 // Role-aware dashboard — dispatches each staff role to their own screen.
 Route::get('/dashboard', [DashboardController::class, 'index'])
