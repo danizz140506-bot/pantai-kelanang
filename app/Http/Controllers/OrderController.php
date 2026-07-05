@@ -36,21 +36,29 @@ class OrderController extends Controller
 
         // For a booked guest arriving (table still Reserved), pre-fill the cart with
         // the items the customer pre-ordered online (FR-01) so the waiter does not
-        // have to re-enter them. Once the order is taken the table becomes Occupied
-        // and the pre-order is no longer re-applied.
+        // have to re-enter them, and surface the deposit already paid so the waiter
+        // can see the outstanding balance. Once the order is taken the table becomes
+        // Occupied and the pre-order is no longer re-applied.
         $preorder = [];
+        $deposit = 0.0;
         if ($table->status === 'Reserved') {
             $reservation = Reservation::where('table_id', $table->table_id)
                 ->where('status', 'Confirmed')
                 ->latest('reservation_id')
                 ->first();
-            $preorder = $reservation?->preorder_items ?? [];
+            if ($reservation) {
+                $preorder = $reservation->preorder_items ?? [];
+                if ($reservation->deposit_status === 'Paid') {
+                    $deposit = (float) $reservation->deposit_amount;
+                }
+            }
         }
 
         return view('orders.create', [
             'table' => $table,
             'menuFlat' => $menuFlat,
             'preorder' => $preorder,
+            'deposit' => $deposit,
             'tables' => TableInfo::orderBy('table_number')->get(['table_id', 'table_number', 'status']),
         ]);
     }

@@ -104,18 +104,20 @@ class OrderKdsTest extends TestCase
         $this->actingAs($waiter)
             ->get("/tables/{$table->table_id}/order")
             ->assertOk()
-            ->assertViewHas('preorder', [['menu_id' => $item->menu_id, 'quantity' => 2]]);
+            ->assertViewHas('preorder', [['menu_id' => $item->menu_id, 'quantity' => 2]])
+            ->assertViewHas('deposit', 14.00);   // the paid deposit is surfaced to the waiter
     }
 
     public function test_order_screen_has_no_preorder_for_a_walk_in_table(): void
     {
         $this->menu();
 
-        // An Available (walk-in) table has no pre-order to pre-fill.
+        // An Available (walk-in) table has no pre-order and no deposit to show.
         $this->actingAs($this->staff('Waiter'))
             ->get("/tables/{$this->table()->table_id}/order")
             ->assertOk()
-            ->assertViewHas('preorder', []);
+            ->assertViewHas('preorder', [])
+            ->assertViewHas('deposit', 0.0);
     }
 
     public function test_order_submission_requires_at_least_one_item(): void

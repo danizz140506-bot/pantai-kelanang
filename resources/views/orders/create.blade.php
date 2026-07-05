@@ -103,10 +103,33 @@
                     </div>
 
                     <div class="border-t border-espresso-700 px-5 py-4">
-                        <div class="mb-3 flex items-center justify-between">
-                            <span class="text-sm text-cream-muted">Total</span>
-                            <span class="font-display text-2xl font-bold text-cream">RM <span x-text="total.toFixed(2)"></span></span>
-                        </div>
+                        {{-- Deposit already paid online → show the outstanding balance --}}
+                        <template x-if="deposit > 0">
+                            <div class="mb-3 space-y-1.5">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-cream-muted">Order total</span>
+                                    <span class="text-cream">RM <span x-text="total.toFixed(2)"></span></span>
+                                </div>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-cream-muted">Deposit paid (50%)</span>
+                                    <span class="text-emerald-300">&minus; RM <span x-text="deposit.toFixed(2)"></span></span>
+                                </div>
+                                <div class="flex items-center justify-between border-t border-espresso-800 pt-2">
+                                    <span class="text-sm font-semibold text-cream">Balance due</span>
+                                    <span class="font-display text-2xl font-bold text-ember">RM <span x-text="balance.toFixed(2)"></span></span>
+                                </div>
+                                <p class="text-[11px] text-cream-faint">Balance before SST — the final bill is calculated at billing.</p>
+                            </div>
+                        </template>
+
+                        {{-- Walk-in (no deposit) → plain total --}}
+                        <template x-if="deposit === 0">
+                            <div class="mb-3 flex items-center justify-between">
+                                <span class="text-sm text-cream-muted">Total</span>
+                                <span class="font-display text-2xl font-bold text-cream">RM <span x-text="total.toFixed(2)"></span></span>
+                            </div>
+                        </template>
+
                         <p x-show="error" x-cloak x-text="error" class="mb-2 text-sm text-rosewood-text"></p>
                         <button type="button" @click="submit()" :disabled="submitting || cart.length === 0"
                             class="w-full rounded-lg bg-ember py-3 text-sm font-semibold text-espresso-950 transition hover:bg-ember-600 disabled:cursor-not-allowed disabled:opacity-40">
@@ -124,6 +147,7 @@
             Alpine.data('orderCart', () => ({
                 menuFlat: @json($menuFlat),
                 preorder: @json($preorder ?? []),
+                deposit: {{ $deposit ?? 0 }},
                 categories: [],
                 activeCategory: '',
                 qty: {},
@@ -154,6 +178,7 @@
                         .map(m => ({ menu_id: m.menu_id, name: m.name, quantity: this.qty[m.menu_id], subtotal: m.price * this.qty[m.menu_id] }));
                 },
                 get total() { return this.cart.reduce((sum, l) => sum + l.subtotal, 0); },
+                get balance() { return Math.max(0, this.total - this.deposit); },
 
                 async submit() {
                     if (this.cart.length === 0) { this.error = 'Add at least one item.'; return; }
