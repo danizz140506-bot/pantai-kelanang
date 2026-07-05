@@ -1,58 +1,107 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Restaurant Order & Table Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web-based restaurant management system built for **Asam Pedas Claypot Pantai Kelanang**, a single-branch restaurant. The system digitises and integrates the restaurant's four core operations — online table reservation, order management, kitchen communication, and billing — into one platform.
 
-## About Laravel
+**Live site:** [asampedasclaypot.my](https://asampedasclaypot.my)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This is a Final Year Project (FYP) for **CSC2854 Project**, Diploma in Computer Science, Kolej Profesional MARA Beranang.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Features
 
-## Learning Laravel
+The system fulfils ten functional requirements across five roles (Customer, Waiter, Kitchen Staff, Cashier, Owner):
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| # | Feature | Description |
+|---|---------|-------------|
+| FR-01 | Online Table Reservation | Public reservation with a 50% deposit paid through the CHIP payment gateway |
+| FR-02 | Real-Time Table Availability | Live floor view (Available / Reserved / Occupied) that refreshes automatically |
+| FR-03 | Digital Table Assignment | Staff seat a party and the table status updates automatically |
+| FR-04 | Digital Order Taking | POS-style order screen; a booked guest's pre-order is carried over to the waiter |
+| FR-05 | Kitchen Display System (KDS) | Confirmed orders are shown to the kitchen in real time |
+| FR-06 | Order Status Tracking | Orders move through Preparing, Ready, and Served |
+| FR-07 | Automated Billing | Itemised bill with SST 6% tax and the reservation deposit credited to the balance |
+| FR-08 | Multiple Payment Methods | Cash, Card, and QR; the table is released after payment |
+| FR-09 | Daily Sales Report | Revenue, transaction count, and popular items, with day-by-day navigation |
+| FR-10 | Login & Role-Based Access | Username login with role-based access control and staff user management |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Tech Stack
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- **Backend:** Laravel 12 (PHP 8.3), MVC, Eloquent ORM
+- **Frontend:** Blade, Tailwind CSS (Vite), Alpine.js
+- **Database:** MySQL
+- **Payment:** CHIP payment gateway (chip-in.asia)
+- **Testing:** PHPUnit feature tests
 
-## Agentic Development
+## Roles
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+| Role | Access |
+|------|--------|
+| Owner | Full access: dashboard, reports, and user management |
+| Waiter | Tables and order taking |
+| Cashier | Billing and payment |
+| Kitchen Staff | Kitchen Display System |
+
+---
+
+## Getting Started (Local)
+
+**Requirements:** PHP 8.3, Composer, Node.js, and MySQL.
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone and install dependencies
+git clone https://github.com/danizz140506-bot/pantai-kelanang.git
+cd pantai-kelanang
+composer install
+npm install && npm run build
 
-php artisan boost:install
+# 2. Set up the environment
+cp .env.example .env
+php artisan key:generate
+
+# 3. Configure the database in .env (DB_DATABASE=pantai_kelanang), then create it
+#    and run the migrations with sample data
+php artisan migrate --seed
+
+# 4. Serve the application
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Open the served URL. The public reservation page is at `/` and the staff login is at `/login`.
 
-## Contributing
+### Payment Gateway (CHIP)
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+The reservation deposit and card/QR payments use the CHIP gateway, configured through `CHIP_BRAND_ID` and `CHIP_SECRET_KEY` in `.env`. When these keys are left empty, the system runs in **simulation mode** so the full flow can be demonstrated without a live gateway.
 
-## Code of Conduct
+## Seeded Accounts
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+After `migrate --seed`, one account is created per role. These are for local development only.
 
-## Security Vulnerabilities
+| Username | Role |
+|----------|------|
+| `owner` | Owner |
+| `waiter` | Waiter |
+| `cashier` | Cashier |
+| `kitchen` | Kitchen Staff |
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Default password: `password`
 
-## License
+## Testing
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan test
+```
+
+The suite covers all ten functional requirements with feature tests for the reservation, table, order/KDS, billing, and reporting modules.
+
+---
+
+## Author
+
+**Muhammad Danish Iskandar bin Mohd Haffizul** (BCS2402-032)
+Diploma in Computer Science, Kolej Profesional MARA Beranang
+CSC2854 Project — Session 1 2026/2027
+
+## Note
+
+This is an academic project. The database credentials and payment keys are supplied through an untracked `.env` file and are not included in this repository.
