@@ -54,7 +54,7 @@ class BillingController extends Controller
 
         $data = $request->validate([
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
-            'payment_method' => ['required', 'in:Cash,Card,E-Wallet'],
+            'payment_method' => ['required', 'in:Cash,Card,QR'],
         ]);
 
         $subtotal = (float) $order->total_amount;
@@ -71,7 +71,7 @@ class BillingController extends Controller
         // (tax is derivable on the receipt as (subtotal − discount) × TAX_RATE.)
         $balance = round(max(0, $subtotal - $discount + $tax - $deposit), 2);
 
-        // Cash (or a fully-covered balance) settles directly; card / e-wallet use CHIP.
+        // Cash (or a fully-covered balance) settles directly; card / QR use CHIP.
         if ($data['payment_method'] === 'Cash' || $balance <= 0.0) {
             $status = 'Successful';
         } else {

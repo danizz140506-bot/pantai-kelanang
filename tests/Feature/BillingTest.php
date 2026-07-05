@@ -124,6 +124,25 @@ class BillingTest extends TestCase
         ]);
     }
 
+    public function test_qr_payment_is_accepted_and_settled(): void
+    {
+        $order = $this->servedOrder(28.00);
+
+        $this->actingAs($this->staff('Cashier'))
+            ->post("/billing/{$order->order_id}", [
+                'payment_method' => 'QR',
+                'discount_amount' => 0,
+            ])->assertRedirect(route('billing.receipt', $order));
+
+        // QR settles through the gateway (simulated in tests); balance = 28 + SST 6%.
+        $this->assertDatabaseHas('payments', [
+            'order_id' => $order->order_id,
+            'payment_method' => 'QR',
+            'payment_status' => 'Successful',
+            'total_amount' => 29.68,
+        ]);
+    }
+
     public function test_a_settled_order_cannot_be_billed_again(): void
     {
         $order = $this->servedOrder(28.00);

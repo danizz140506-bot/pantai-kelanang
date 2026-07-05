@@ -2,6 +2,12 @@
     @php
         $itemCount = $order->orderItems->count();
         $totalQty = $order->orderItems->sum('quantity');
+        // Payment methods with a distinct icon each (heroicons: banknotes / card / qr-code).
+        $methods = [
+            ['name' => 'Cash', 'sub' => 'Physical currency', 'icon' => 'M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m0 0v.375c0 .621.504 1.125 1.125 1.125H18.75m-.75-9v-.375c0-.621.504-1.125 1.125-1.125H21m-.75 9v.75a.75.75 0 0 0 .75.75h.75M18 6.75h.008v.008H18V6.75Zm-12 0h.008v.008H6V6.75Zm12 6.75h.008v.008H18V13.5Zm-12 0h.008v.008H6V13.5Zm6-3.375a2.625 2.625 0 1 1 0 5.25 2.625 2.625 0 0 1 0-5.25Z'],
+            ['name' => 'Card', 'sub' => 'Debit / credit card', 'icon' => 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 18.75Z'],
+            ['name' => 'QR', 'sub' => 'DuitNow QR · TNG, GrabPay, Boost', 'icon' => 'M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 3.75 9.375v-4.5ZM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 0 1-1.125-1.125v-4.5ZM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0 1 13.5 9.375v-4.5ZM6.75 6.75h.75v.75h-.75v-.75ZM6.75 16.5h.75v.75h-.75v-.75ZM16.5 6.75h.75v.75h-.75v-.75ZM13.5 13.5h.75v.75h-.75v-.75ZM13.5 19.5h.75v.75h-.75v-.75ZM19.5 13.5h.75v.75h-.75v-.75ZM19.5 19.5h.75v.75h-.75v-.75ZM16.5 16.5h.75v.75h-.75v-.75Z'],
+        ];
     @endphp
 
     <div x-data="{
@@ -10,6 +16,9 @@
             taxRate: {{ $taxRate }},
             discount: 0,
             method: 'Cash',
+            open: false,
+            methods: @js($methods),
+            get selected() { return this.methods.find(m => m.name === this.method) || this.methods[0]; },
             round2(n) { return Math.round(n * 100) / 100; },
             get taxable() { return Math.max(0, this.subtotal - Math.min(Math.max(0, this.discount || 0), this.subtotal)); },
             get tax() { return this.round2(this.taxable * this.taxRate); },
@@ -127,29 +136,39 @@
                     <h2 class="font-display text-lg font-semibold text-cream">Payment Method</h2>
                     <p class="mb-4 text-sm text-cream-muted">Select how the customer will pay</p>
 
-                    <div class="space-y-2.5">
-                        @php
-                            $methods = [
-                                ['name' => 'Cash', 'sub' => 'Physical currency', 'icon' => 'M3 7h18v10H3zM3 11h18M7 15h2'],
-                                ['name' => 'Card', 'sub' => 'Debit / credit card', 'icon' => 'M3 7h18v10H3zM3 11h18'],
-                                ['name' => 'E-Wallet', 'sub' => 'Touch \'n Go, GrabPay, Boost', 'icon' => 'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM11 18h2'],
-                            ];
-                        @endphp
-                        @foreach ($methods as $m)
-                            <button type="button" @click="method = '{{ $m['name'] }}'"
-                                class="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition"
-                                :class="method === '{{ $m['name'] }}' ? 'border-ember bg-ember text-espresso-950' : 'border-espresso-700 bg-espresso-900 hover:border-ember/50'">
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                                      :class="method === '{{ $m['name'] }}' ? 'bg-espresso-950/15' : 'bg-espresso-800 text-cream-muted'">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $m['icon'] }}"/></svg>
-                                </span>
-                                <span class="flex-1">
-                                    <span class="block text-sm font-semibold" :class="method === '{{ $m['name'] }}' ? 'text-espresso-950' : 'text-cream'">{{ $m['name'] }}</span>
-                                    <span class="block text-[11px]" :class="method === '{{ $m['name'] }}' ? 'text-espresso-950/70' : 'text-cream-faint'">{{ $m['sub'] }}</span>
-                                </span>
-                                <span x-show="method === '{{ $m['name'] }}'" class="rounded-full bg-espresso-950/20 px-2 py-0.5 text-[10px] font-bold text-espresso-950">Selected</span>
-                            </button>
-                        @endforeach
+                    {{-- Payment method dropdown --}}
+                    <div class="relative" @click.outside="open = false">
+                        <button type="button" @click="open = !open"
+                            class="flex w-full items-center gap-3 rounded-xl border border-espresso-700 bg-espresso-900 p-3 text-left transition hover:border-ember/50"
+                            :class="open && 'border-ember/60'">
+                            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ember/15 text-ember">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" :d="selected.icon"/></svg>
+                            </span>
+                            <span class="flex-1">
+                                <span class="block text-sm font-semibold text-cream" x-text="selected.name"></span>
+                                <span class="block text-[11px] text-cream-faint" x-text="selected.sub"></span>
+                            </span>
+                            <svg class="h-4 w-4 text-cream-muted transition-transform" :class="open && 'rotate-180'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+                        </button>
+
+                        <div x-show="open" x-cloak x-transition.origin.top.duration.150ms
+                             class="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-espresso-700 bg-espresso-900 shadow-2xl">
+                            <template x-for="m in methods" :key="m.name">
+                                <button type="button" @click="method = m.name; open = false"
+                                    class="flex w-full items-center gap-3 p-3 text-left transition"
+                                    :class="method === m.name ? 'bg-ember text-espresso-950' : 'hover:bg-espresso-800'">
+                                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                                          :class="method === m.name ? 'bg-espresso-950/15 text-espresso-950' : 'bg-espresso-800 text-cream-muted'">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" :d="m.icon"/></svg>
+                                    </span>
+                                    <span class="flex-1">
+                                        <span class="block text-sm font-semibold" :class="method === m.name ? 'text-espresso-950' : 'text-cream'" x-text="m.name"></span>
+                                        <span class="block text-[11px]" :class="method === m.name ? 'text-espresso-950/70' : 'text-cream-faint'" x-text="m.sub"></span>
+                                    </span>
+                                    <svg x-show="method === m.name" class="h-4 w-4 text-espresso-950" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                </button>
+                            </template>
+                        </div>
                     </div>
 
                     <p class="mt-3 flex items-center gap-2 rounded-lg border border-espresso-700 bg-espresso-900 px-3 py-2 text-[11px] text-cream-muted">

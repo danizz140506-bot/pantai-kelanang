@@ -19,7 +19,7 @@ return new class extends Migration
             $table->decimal('subtotal', 10, 2);                                // before discount
             $table->decimal('discount_amount', 8, 2)->default(0);              // discount (0 if none)
             $table->decimal('total_amount', 10, 2);                            // final paid after discount
-            $table->enum('payment_method', ['Cash', 'Card', 'E-Wallet']);
+            $table->enum('payment_method', ['Cash', 'Card', 'QR']);
             $table->enum('payment_status', ['Successful', 'Failed', 'Refunded'])->default('Successful');
             $table->dateTime('payment_date');                                  // date & time of payment
         });
