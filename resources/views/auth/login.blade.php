@@ -6,7 +6,7 @@
 
         {{-- Logo badge --}}
         <div class="mx-auto h-16 w-16 overflow-hidden rounded-full bg-cream ring-1 ring-ember/50 shadow-[0_0_0_6px_rgba(240,133,31,0.06)]">
-            <img src="{{ asset('images/logo.png') }}" alt="Asam Pedas Claypot Pantai Kelanang" class="h-full w-full object-cover" />
+            <img src="{{ asset('images/logo-icon.png') }}" alt="Asam Pedas Claypot Pantai Kelanang" class="h-full w-full object-cover" />
         </div>
 
         {{-- Brand --}}

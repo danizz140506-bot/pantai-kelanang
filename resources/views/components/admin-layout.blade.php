@@ -16,6 +16,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+        <link rel="icon" type="image/png" href="{{ asset('images/logo-icon.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/logo-icon.png') }}">
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ $title }} · Asam Pedas Claypot Pantai Kelanang</title>
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -29,7 +32,7 @@
         <div class="sticky top-0 z-30 flex items-center justify-between border-b border-espresso-700 bg-espresso-950/95 px-4 py-3 backdrop-blur lg:hidden">
             <span class="flex items-center gap-2">
                 <span class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-cream ring-1 ring-ember/50">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-full w-full object-cover" />
+                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo" class="h-full w-full object-cover" />
                 </span>
                 <span class="font-display text-base font-semibold text-cream">Owner Panel</span>
             </span>
@@ -46,7 +49,7 @@
                :class="sidebar && 'translate-x-0'">
             <div class="flex items-center gap-3 border-b border-espresso-700 px-5 py-5">
                 <span class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-cream ring-1 ring-ember/50">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-full w-full object-cover" />
+                    <img src="{{ asset('images/logo-icon.png') }}" alt="Logo" class="h-full w-full object-cover" />
                 </span>
                 <div class="min-w-0">
                     <p class="text-[9px] font-semibold uppercase tracking-[0.2em] text-ember">Owner Panel</p>
