@@ -78,13 +78,6 @@
                 </button>
             </div>
 
-            {{-- Errors --}}
-            @if ($errors->any())
-                <div class="mx-5 mt-4 rounded-lg border border-rosewood-border bg-rosewood-bg/40 px-4 py-3 text-sm text-rosewood-text">
-                    <ul class="list-inside list-disc">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
-                </div>
-            @endif
-
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-espresso-700 text-sm">
                     <thead>
@@ -156,6 +149,12 @@
                 <h3 class="font-display text-xl font-semibold text-cream" x-text="mode === 'edit' ? 'Edit Staff Account' : 'Add New User'"></h3>
                 <p class="mb-5 text-sm text-cream-muted">Create a staff account with access permissions.</p>
 
+                @if ($errors->any())
+                    <div class="mb-4 rounded-lg border border-rosewood-border bg-rosewood-bg/40 px-4 py-3 text-sm text-rosewood-text">
+                        <ul class="list-inside list-disc space-y-0.5">@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul>
+                    </div>
+                @endif
+
                 <form :action="mode === 'edit' ? '/users/' + form.id : '{{ route('users.store') }}'" method="POST" class="space-y-4">
                     @csrf
                     <input type="hidden" name="_method" :value="mode === 'edit' ? 'PUT' : 'POST'">
@@ -168,7 +167,10 @@
                     <div>
                         <label class="mb-1.5 block text-xs font-medium text-cream-muted">Username</label>
                         <input name="username" x-model="form.username" required placeholder="e.g. cashier01"
-                               class="w-full rounded-lg border border-espresso-700 bg-espresso-900 px-3.5 py-2.5 text-sm text-cream placeholder-cream-faint focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/20" />
+                               class="w-full rounded-lg border bg-espresso-900 px-3.5 py-2.5 text-sm text-cream placeholder-cream-faint focus:outline-none focus:ring-2 @error('username') border-rosewood-border focus:border-rosewood-border focus:ring-rosewood-border/20 @else border-espresso-700 focus:border-ember focus:ring-ember/20 @enderror" />
+                        @error('username')
+                            <p class="mt-1.5 text-xs text-rosewood-text">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="mb-1.5 block text-xs font-medium text-cream-muted">Role</label>
