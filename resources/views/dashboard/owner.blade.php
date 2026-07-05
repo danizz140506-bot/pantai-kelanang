@@ -50,12 +50,13 @@
                 </div>
             </div>
             @php $maxRev = max($chart->max('revenue'), 1); @endphp
-            <div class="flex h-44 items-end justify-between gap-2 sm:gap-4">
+            <div class="flex h-44 items-stretch justify-between gap-2 sm:gap-4">
                 @foreach ($chart as $d)
-                    <div class="group flex flex-1 flex-col items-center gap-2">
-                        <div class="relative flex w-full flex-1 items-end">
-                            <div class="w-full rounded-t-md bg-ember/80 transition-all group-hover:bg-ember"
-                                 style="height: {{ max(4, round($d['revenue'] / $maxRev * 100)) }}%"
+                    <div class="group flex flex-1 flex-col items-center gap-1.5">
+                        <span class="text-[10px] font-semibold text-ember {{ $d['revenue'] > 0 ? '' : 'invisible' }}">{{ number_format($d['revenue'], 0) }}</span>
+                        <div class="relative w-full flex-1">
+                            <div class="absolute inset-x-0 bottom-0 rounded-t-md bg-ember/80 transition-all group-hover:bg-ember"
+                                 style="height: {{ $d['revenue'] > 0 ? max(4, round($d['revenue'] / $maxRev * 100)) : 0 }}%"
                                  title="{{ $d['date'] }}: RM {{ number_format($d['revenue'], 2) }}"></div>
                         </div>
                         <span class="text-[11px] font-medium text-cream-muted">{{ $d['label'] }}</span>
