@@ -91,9 +91,15 @@ class ReservationController extends Controller
             return back()->withInput()->with('error', 'Please select at least one menu item to calculate the deposit.');
         }
 
+        // The customer's pre-ordered items, kept with the reservation so the
+        // waiter's order screen can pre-fill the cart when the guest arrives.
+        $preorder = collect($data['items'])
+            ->map(fn (array $line) => ['menu_id' => (int) $line['menu_id'], 'quantity' => (int) $line['quantity']])
+            ->values()->all();
+
         // Match the customer by phone (create if none), then create the RESERVATION
         // record up front in the Pending state — before the deposit is paid (SDD 5.2).
-        $reservation = DB::transaction(function () use ($data, $table, $deposit) {
+        $reservation = DB::transaction(function () use ($data, $table, $deposit, $preorder) {
             $customer = Customer::firstOrCreate(
                 ['phone_number' => $data['phone_number']],
                 ['name' => $data['name'], 'email' => $data['email'] ?? null],
@@ -106,6 +112,7 @@ class ReservationController extends Controller
                 'arrival_time' => $data['arrival_time'],
                 'pax' => $data['pax'],
                 'deposit_amount' => $deposit,
+                'preorder_items' => $preorder,
             ]);
         });
 

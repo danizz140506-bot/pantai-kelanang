@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\Customer;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Reservation;
 use App\Models\TableInfo;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -77,6 +79,43 @@ class OrderKdsTest extends TestCase
             'quantity' => 2,
             'special_instructions' => 'less spicy',
         ]);
+    }
+
+    public function test_order_screen_prefills_the_reservation_preorder_for_a_reserved_table(): void
+    {
+        $waiter = $this->staff('Waiter');
+        $item = $this->menu();
+        $table = $this->table('Reserved');
+        $customer = Customer::create(['name' => 'Ali', 'phone_number' => '0123456789', 'email' => null]);
+        Reservation::create([
+            'customer_id' => $customer->customer_id,
+            'table_id' => $table->table_id,
+            'reservation_date' => now()->toDateString(),
+            'arrival_time' => '19:00',
+            'pax' => 2,
+            'deposit_amount' => 14.00,
+            'preorder_items' => [['menu_id' => $item->menu_id, 'quantity' => 2]],
+            'deposit_status' => 'Paid',
+            'status' => 'Confirmed',
+        ]);
+
+        // The waiter opens the order screen for the reserved table — the cart is
+        // pre-filled with the customer's online pre-order (FR-01).
+        $this->actingAs($waiter)
+            ->get("/tables/{$table->table_id}/order")
+            ->assertOk()
+            ->assertViewHas('preorder', [['menu_id' => $item->menu_id, 'quantity' => 2]]);
+    }
+
+    public function test_order_screen_has_no_preorder_for_a_walk_in_table(): void
+    {
+        $this->menu();
+
+        // An Available (walk-in) table has no pre-order to pre-fill.
+        $this->actingAs($this->staff('Waiter'))
+            ->get("/tables/{$this->table()->table_id}/order")
+            ->assertOk()
+            ->assertViewHas('preorder', []);
     }
 
     public function test_order_submission_requires_at_least_one_item(): void

@@ -75,6 +75,10 @@
                     <div class="border-b border-espresso-700 px-5 py-4">
                         <h3 class="font-display text-lg font-semibold text-cream">Current Order</h3>
                         <p class="text-sm text-cream-muted">Table {{ $table->table_number }} · Dine-in</p>
+                        <p x-show="hasPreorder" x-cloak class="mt-2 flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-xs text-amber-200">
+                            <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            Pre-filled from the customer&rsquo;s online reservation — adjust if needed.
+                        </p>
                     </div>
 
                     <div class="flex-1 overflow-y-auto px-5 py-3">
@@ -119,6 +123,7 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('orderCart', () => ({
                 menuFlat: @json($menuFlat),
+                preorder: @json($preorder ?? []),
                 categories: [],
                 activeCategory: '',
                 qty: {},
@@ -129,7 +134,16 @@
                 init() {
                     this.categories = [...new Set(this.menuFlat.map(m => m.category))];
                     this.activeCategory = this.categories[0] || '';
+
+                    // Pre-fill the cart with the customer's online pre-order (FR-01),
+                    // limited to items still on the menu.
+                    const onMenu = new Set(this.menuFlat.map(m => m.menu_id));
+                    this.preorder.forEach(line => {
+                        if (onMenu.has(line.menu_id)) this.qty[line.menu_id] = line.quantity;
+                    });
                 },
+
+                get hasPreorder() { return this.preorder.length > 0; },
 
                 inc(id) { this.qty[id] = (this.qty[id] || 0) + 1; },
                 dec(id) { this.qty[id] = Math.max(0, (this.qty[id] || 0) - 1); },

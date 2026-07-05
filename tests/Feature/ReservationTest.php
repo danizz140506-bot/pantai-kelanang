@@ -69,6 +69,13 @@ class ReservationTest extends TestCase
             'status' => 'Confirmed',
         ]);
         $this->assertSame('Reserved', $table->fresh()->status);   // FR-02
+
+        // The pre-ordered items are kept with the reservation so the waiter's
+        // order screen can pre-fill the cart when the guest arrives.
+        $this->assertEquals(
+            [['menu_id' => $item->menu_id, 'quantity' => 2]],
+            Reservation::first()->preorder_items,
+        );
     }
 
     public function test_reservation_requires_at_least_one_menu_item(): void

@@ -21,6 +21,7 @@ class Reservation extends Model
         'arrival_time',
         'pax',
         'deposit_amount',
+        'preorder_items',
         'deposit_status',
         'status',
     ];
@@ -30,6 +31,7 @@ class Reservation extends Model
         return [
             'reservation_date' => 'date',
             'deposit_amount' => 'decimal:2',
+            'preorder_items' => 'array',
         ];
     }
 

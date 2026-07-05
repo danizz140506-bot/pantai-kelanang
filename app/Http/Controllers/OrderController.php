@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Reservation;
 use App\Models\TableInfo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -33,9 +34,23 @@ class OrderController extends Controller
             'category' => $m->category,
         ])->values();
 
+        // For a booked guest arriving (table still Reserved), pre-fill the cart with
+        // the items the customer pre-ordered online (FR-01) so the waiter does not
+        // have to re-enter them. Once the order is taken the table becomes Occupied
+        // and the pre-order is no longer re-applied.
+        $preorder = [];
+        if ($table->status === 'Reserved') {
+            $reservation = Reservation::where('table_id', $table->table_id)
+                ->where('status', 'Confirmed')
+                ->latest('reservation_id')
+                ->first();
+            $preorder = $reservation?->preorder_items ?? [];
+        }
+
         return view('orders.create', [
             'table' => $table,
             'menuFlat' => $menuFlat,
+            'preorder' => $preorder,
             'tables' => TableInfo::orderBy('table_number')->get(['table_id', 'table_number', 'status']),
         ]);
     }
